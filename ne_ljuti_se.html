@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ludo Dice Statistics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="inputPage">
+        <h2>Enter Player Names</h2>
+        <form id="playerForm">
+            <label for="player1">Player 1:</label>
+            <input type="text" id="player1" name="player1" required><br><br>
+            
+            <label for="player2">Player 2:</label>
+            <input type="text" id="player2" name="player2" required><br><br>
+            
+            <label for="player3">Player 3:</label>
+            <input type="text" id="player3" name="player3" required><br><br>
+            
+            <label for="player4">Player 4:</label>
+            <input type="text" id="player4" name="player4" required><br><br>
+            
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <div id="resultPage" style="display: none;">
+        <h2>Dice Statistics</h2>
+        <div id="playerStats" style="display: flex;"></div>
+        <button id="showStatsButton" style="margin-top: 20px;">Show Statistics</button>
+        <div id="chartContainer" style="display: none;">
+            <canvas id="chart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        var diceCounts = {};
+
+        document.getElementById('playerForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var players = [
+                document.getElementById('player1').value,
+                document.getElementById('player2').value,
+                document.getElementById('player3').value,
+                document.getElementById('player4').value
+            ];
+
+            initializeDiceCounts(players);
+            displayStatistics(players);
+        });
+
+        function initializeDiceCounts(players) {
+            for (var i = 0; i < players.length; i++) {
+                var playerName = players[i];
+                diceCounts[playerName] = [0, 0, 0, 0, 0, 0];
+            }
+        }
+
+        function displayStatistics(players) {
+            var resultPage = document.getElementById('resultPage');
+            var inputPage = document.getElementById('inputPage');
+
+            inputPage.style.display = 'none';
+            resultPage.style.display = 'block';
+
+            var playerStats = document.getElementById('playerStats');
+            for (var i = 0; i < players.length; i++) {
+                var playerName = players[i];
+                var playerColumn = document.createElement('div');
+                playerColumn.style.marginRight = '20px'; // Adjust spacing between player sections
+                var playerHeader = document.createElement('h3');
+                playerHeader.textContent = playerName;
+                playerColumn.appendChild(playerHeader);
+                
+                for (var j = 1; j <= 6; j++) {
+                    var addButton = document.createElement('button');
+                    addButton.textContent = '+';
+                    addButton.onclick = incrementCounter.bind(null, playerName, j);
+                    addButton.style.marginRight = '5px'; // Adjust spacing between elements
+
+                    var minusButton = document.createElement('button');
+                    minusButton.textContent = '-';
+                    minusButton.onclick = decrementCounter.bind(null, playerName, j);
+                    minusButton.style.marginRight = '5px'; // Adjust spacing between elements
+
+                    var countDisplay = document.createElement('span');
+                    countDisplay.id = playerName + '-' + j;
+                    countDisplay.textContent = '0';
+
+                    var diceRow = document.createElement('div');
+                    diceRow.style.display = 'flex';
+                    diceRow.style.alignItems = 'center'; // Center align buttons and count
+                    diceRow.appendChild(document.createTextNode(j + ': '));
+                    diceRow.appendChild(addButton);
+                    diceRow.appendChild(document.createTextNode(' '));
+                    diceRow.appendChild(minusButton);
+                    diceRow.appendChild(document.createTextNode(' '));
+                    diceRow.appendChild(countDisplay);
+                    playerColumn.appendChild(diceRow);
+                }
+
+                playerStats.appendChild(playerColumn);
+            }
+        }
+
+        function incrementCounter(playerName, number) {
+            diceCounts[playerName][number - 1]++;
+            updateCountDisplay(playerName, number);
+        }
+
+        function decrementCounter(playerName, number) {
+            if (diceCounts[playerName][number - 1] > 0) {
+                diceCounts[playerName][number - 1]--;
+                updateCountDisplay(playerName, number);
+            }
+        }
+
+        function updateCountDisplay(playerName, number) {
+            var countDisplay = document.getElementById(playerName + '-' + number);
+            countDisplay.textContent = diceCounts[playerName][number - 1];
+        }
+
+        document.getElementById('showStatsButton').addEventListener('click', function() {
+            var chartContainer = document.getElementById('chartContainer');
+            var chart = document.getElementById('chart');
+
+            chartContainer.style.display = 'block';
+
+            var ctx = chart.getContext('2d');
+            var labels = ['1', '2', '3', '4', '5', '6'];
+            var datasets = [];
+
+            for (var playerName in diceCounts) {
+                datasets.push({
+                    label: playerName,
+                    backgroundColor: getRandomColor(),
+                    data: diceCounts[playerName]
+                });
+            }
+
+            if (window.myChart) {
+                window.myChart.destroy();
+            }
+
+            window.myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+        });
+
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+    </script>
+</body>
+</html>
